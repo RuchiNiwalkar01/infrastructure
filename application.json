@@ -59,10 +59,8 @@
       "myDatabasePassword": {
           "Type": "String",
           "NoEcho": true
-      },
-      "myPublicAccesibility":{
-        "Type": "boolean"
       }
+        
         
         
     },
@@ -378,9 +376,7 @@
 
           },
           "MultiAZ": false,
-          "PubliclyAccessible": {
-            "Ref": "myPublicAccesibility"
-        },
+          "PubliclyAccessible": false,
           "Tags": [
               {
                   "Key": "Name",
