@@ -59,6 +59,13 @@
       "myDatabasePassword": {
           "Type": "String",
           "NoEcho": true
+      },
+      "myPublicAccessibiltiyRDS":{
+        "Type":"String",
+        "AllowedValues": [
+          "yes",
+          "no"
+        ]
       }
         
         
@@ -68,7 +75,7 @@
 
     },
     "Conditions": {
-
+      "DatabaseRdsPublicAccess" : {"Fn::Equals" : [{"Ref" : "myPublicAccessibiltiyRDS"}, "yes"]}
     },
     "Resources": {
         
@@ -376,7 +383,11 @@
 
           },
           "MultiAZ": false,
-          "PubliclyAccessible": false,
+          "PubliclyAccessible": { "Fn::If" : [
+            "DatabaseRdsPublicAccess",
+            true,
+            false
+          ]},
           "Tags": [
               {
                   "Key": "Name",
@@ -467,7 +478,6 @@
                    "#!/bin/bash -xe \n",
                    "sudo apt update \n",
                    "sudo apt install mysql-client -y \n",
-                   "sudo chmod +777 /etc/profile",
                    {
                     "Fn::Join": 
                     ["",
