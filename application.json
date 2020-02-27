@@ -1,0 +1,558 @@
+{
+"AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Launch Network Stack - CSYE 6225 Spring 2020",
+    "Metadata": {
+
+    },
+    "Parameters": {
+        "VPCCidrBlock" : {
+            "Type" : "String",
+            "Description" : "Please enter CIDR block range for VPC : "
+        },
+        "MyVPCName" : {
+            "Type" : "String"
+        },
+        "Subnet1CIDR" : {
+            "Type" : "String",
+            "Description" : "Please enter CIDR block range for Subnet 1 : "
+        },
+        "Subnet2CIDR" : {
+            "Type" : "String",
+            "Description" : "Please enter CIDR block range for Subnet 2 : "
+        },
+        "Subnet3CIDR" : {
+            "Type" : "String",
+            "Description" : "Please enter CIDR block range for Subnet 3 : "
+        },
+        "InstanceTypeEC2": {
+          "Type": "String",
+          "AllowedValues": [
+              "t2.micro",
+              "m1.small"
+          ]
+      },
+      "KeyNameForSSH": {
+          "Type": "String"
+      },
+      "AMIId": {
+          "Type": "String"
+      },
+      "myDBInstanceIdentifier": {
+          "Type": "String"
+      },
+      "myEngine": {
+          "Type": "String"
+      },
+      "myDBInstanceClass": {
+          "Type": "String"
+      },
+      "myDBAllocatedStorage": {
+          "Type": "Number",
+          "Description": "The size of the database (GiB)"
+      },
+      "myDBName": {
+          "Type": "String"
+      },
+      "myDatabaseUsername": {
+          "Type": "String"
+      },
+      "myDatabasePassword": {
+          "Type": "String",
+          "NoEcho": true
+      }
+        
+        
+        
+    },
+    "Mappings": {
+
+    },
+    "Conditions": {
+
+    },
+    "Resources": {
+        
+        "myVPC": {
+          "Type": "AWS::EC2::VPC",
+          "Properties": {
+            "CidrBlock": {"Ref":"VPCCidrBlock"},
+            "InstanceTenancy" : "default",
+            "Tags" : [ {"Key" : "Name", "Value" : {"Ref":"MyVPCName"}} ]
+          }
+        },
+        
+        "myPublicSubnet1": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "VpcId": {"Ref" : "myVPC"},
+            "CidrBlock": {"Ref":"Subnet1CIDR"},
+            "AvailabilityZone" : {
+                "Fn::Select" : [ 
+                  "0", 
+                  { 
+                    "Fn::GetAZs" : "" 
+                  } 
+                ]
+              },
+            "Tags" : [ {"Key" : "Name", "Value" : "publicSubnet1"} ]
+          }
+        },
+        
+        "myPublicSubnet2": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "VpcId": {"Ref" : "myVPC"},
+            "CidrBlock": {"Ref":"Subnet2CIDR"},
+            "AvailabilityZone" : {
+                "Fn::Select" : [ 
+                  "1", 
+                  { 
+                    "Fn::GetAZs" : "" 
+                  } 
+                ]
+              },
+            "Tags" : [ {"Key" : "Name", "Value" : "publicSubnet2"} ]
+          }
+        },
+        
+        "myPublicSubnet3": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "VpcId": {"Ref" : "myVPC"},
+            "CidrBlock": {"Ref":"Subnet3CIDR"},
+            "AvailabilityZone" : {
+                "Fn::Select" : [ 
+                  "2", 
+                  { 
+                    "Fn::GetAZs" : "" 
+                  } 
+                ]
+              },
+            "Tags" : [ {"Key" : "Name", "Value" : "publicSubnet3"} ]
+          }
+        },
+        
+        
+        "myInternetGateway": {
+          "Type": "AWS::EC2::InternetGateway",
+          "Properties": {
+            "Tags" : [ {"Key" : "Name", "Value" : "InternetGateway-6255"} ]
+          }
+        },
+        "AttachGateway": {
+          "Type": "AWS::EC2::VPCGatewayAttachment",
+          "Properties": {
+            "VpcId": {"Ref" : "myVPC"},
+            "InternetGatewayId": { "Ref": "myInternetGateway" }
+          }
+        },
+        
+        "myRouteTable": {
+          "Type": "AWS::EC2::RouteTable",
+          "Properties": {
+            "VpcId": {"Ref" : "myVPC"},
+            "Tags" : [ {"Key" : "Name", "Value" : "RouteTable-6255"} ]
+          }
+        },
+      
+        "mySubnetRouteTableAssociation1": {
+          "Type": "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties": {
+            "SubnetId": {"Ref" : "myPublicSubnet1"},
+            "RouteTableId": { "Ref": "myRouteTable" }
+          }
+        },
+        "mySubnetRouteTableAssociation2": {
+          "Type": "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties": {
+            "SubnetId": {"Ref" : "myPublicSubnet2"},
+            "RouteTableId": { "Ref": "myRouteTable" }
+          }
+        },
+        "mySubnetRouteTableAssociation3": {
+          "Type": "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties": {
+            "SubnetId": {"Ref" : "myPublicSubnet3"},
+            "RouteTableId": { "Ref": "myRouteTable" }
+          }
+        },        
+        "myRoute" : {
+          "Type" : "AWS::EC2::Route",
+          "Properties" : {
+            "RouteTableId" : { "Ref" : "myRouteTable" },
+            "DestinationCidrBlock" : "0.0.0.0/0",
+            "GatewayId" : { "Ref" : "myInternetGateway" }
+          }
+        },
+
+        
+        "applicationSecurityGroup" : {
+          "Type" : "AWS::EC2::SecurityGroup",
+          "Properties" : {
+            "GroupName" : "applicationSecurityGroup",
+            "GroupDescription" : "Creating application security group through cloud formation",
+            "Tags" :  [ {"Key" : "Name" , "Value" : "applicationSecurityGroup-csye6225" }],
+            "SecurityGroupIngress" : [ 
+             {
+                "IpProtocol" : "tcp",
+                "FromPort" : 22,
+                "ToPort" : 22,
+                "CidrIp" : "0.0.0.0/0"
+             },
+             {
+              "IpProtocol" : "tcp",
+              "FromPort" : 80,
+              "ToPort" : 80,
+              "CidrIp" : "0.0.0.0/0"
+             },
+             {
+              "IpProtocol" : "tcp",
+              "FromPort" : 443,
+              "ToPort" : 443,
+              "CidrIp" : "0.0.0.0/0"
+             },
+             {
+              "IpProtocol" : "tcp",
+              "FromPort" : 8080,
+              "ToPort" : 8080,
+              "CidrIp" : "0.0.0.0/0"
+             }
+            ],
+            "VpcId": {"Ref" : "myVPC"}
+            
+          }
+        },
+        "databaseScurityGroup" : {
+          "Type" : "AWS::EC2::SecurityGroup",
+          "Properties" : {
+            "GroupName" : "databaseSecurityGroup",
+            "GroupDescription" : "Creating database security group through cloud formation",
+            "Tags" :  [ {"Key" : "Name" , "Value" : "databaseSecurityGroup-csye6225" }],
+            "SecurityGroupIngress" : [ 
+             {
+                "IpProtocol" : "tcp",
+                "FromPort" : 3306,
+                "ToPort" : 3306,
+                "SourceSecurityGroupId" : {
+                  "Ref" : "applicationSecurityGroup"
+                }
+             }
+            ],
+            "VpcId": {"Ref" : "myVPC"}
+            
+          }
+        },
+
+          
+          "myS3Bucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "LifecycleConfiguration": {
+                "Rules" : [{
+                "Id" : "S3 Transition and Expiration",
+                "Prefix" : "",
+                "Status" : "Enabled",
+                "ExpirationInDays" : "90",
+                "Transitions" : [
+                  {
+                    "StorageClass" : "STANDARD_IA",
+                    "TransitionInDays" : 30
+                  }
+
+                ]
+              }
+              ]},
+              "BucketEncryption" : {
+                "ServerSideEncryptionConfiguration" : [ {"ServerSideEncryptionByDefault": {
+                  "SSEAlgorithm" : "AES256"
+                  } 
+                  }] 
+            }
+          }
+        },
+        
+        "myWebAppS3Policy": {
+           "Type": "AWS::IAM::ManagedPolicy",
+           "DependsOn" : "myS3Bucket",
+           "Properties": {
+            "ManagedPolicyName": "WebApp-EC2-S3-Policy",
+              "PolicyDocument" : {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": [
+                            "s3:*"
+                        ],
+                        "Effect": "Allow",
+                        "Resource": 
+                        {
+                          "Fn::Join": [
+                              "",
+                              [
+                                  "arn:aws:s3:::",
+                                  {
+                                      "Ref": "myS3Bucket"
+                                  },
+                                  "/*"
+                              ]
+                          ]
+                      }
+                    }
+                ]
+            }
+          }
+        },
+
+        "myEC2CSYE6225Role": {
+          "Type": "AWS::IAM::Role",
+          "DependsOn": "myWebAppS3Policy",
+          "Properties": {
+              "AssumeRolePolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                      {
+                          "Effect": "Allow",
+                          "Principal": {
+                              "Service": [
+                                  "ec2.amazonaws.com"
+                              ]
+                          },
+                          "Action": [
+                              "sts:AssumeRole"
+                          ]
+                      }
+                  ]
+              },
+              "ManagedPolicyArns": 
+              [
+                  {
+                      "Ref": "myWebAppS3Policy"
+                  }
+              ],
+              "RoleName": "EC2-CSYE6225Role"
+          }
+      },
+
+
+      "EC2InstanceProfile": {
+        "Type": "AWS::IAM::InstanceProfile",
+        "DependsOn": "myEC2CSYE6225Role",
+        "Properties": {
+            "InstanceProfileName": "myEC2-CSYE6255-Instance-Profile",
+            "Path": "/",
+            "Roles": [
+                {
+                    "Ref": "myEC2CSYE6225Role"
+                }
+            ]
+        }
+    },
+
+    "myRDSInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+          "DBInstanceIdentifier": {
+              "Ref": "myDBInstanceIdentifier"
+          },
+
+          "DBName": {
+              "Ref": "myDBName"
+          },
+          "DBInstanceClass": {
+              "Ref": "myDBInstanceClass"
+          },
+          "AllocatedStorage": {
+              "Ref": "myDBAllocatedStorage"
+          },
+          "Engine":{
+            "Ref": "myEngine"},
+          
+          "MasterUsername": {
+
+              "Ref": "myDatabaseUsername"
+          },
+          "MasterUserPassword": {
+              "Ref": "myDatabasePassword"
+
+          },
+          "MultiAZ": false,
+          "PubliclyAccessible": false,
+          "Tags": [
+              {
+                  "Key": "Name",
+                  "Value": "RDS MySQL - CSYE6225"
+              }
+          ],
+          "VPCSecurityGroups": [
+              {
+                  "Ref": "databaseScurityGroup"
+              }
+          ],
+          "DBSubnetGroupName": {
+              "Ref": "DBSubnetGroup"
+          }
+      }
+    }
+   ,
+      
+   "DBSubnetGroup": {
+    "Type": "AWS::RDS::DBSubnetGroup",
+    "Properties": {
+        "DBSubnetGroupDescription": "Included two Subnet- PublicSubnetId2, PublicSubnetId3",
+        "SubnetIds": [
+            {
+                "Ref": "myPublicSubnet2"
+            },
+            {
+                "Ref": "myPublicSubnet3"
+            }
+        ],
+        "Tags": [{"Key": "Name","Value": "Database SubnetGroup "} ]
+    }
+},
+
+"ec2Instance": {
+  "Type": "AWS::EC2::Instance",
+  "DependsOn": [
+      "EC2InstanceProfile",
+      "myEC2CSYE6225Role",
+      "myRDSInstance"
+  ],
+  "Properties": {
+      "ImageId": {
+          "Ref": "AMIId"
+      },
+      "NetworkInterfaces": [
+          {
+              "AssociatePublicIpAddress": "True",
+              "SubnetId": {
+                  "Ref": "myPublicSubnet1"
+              },
+              "DeviceIndex": "0",
+              "GroupSet": [
+                  {
+                      "Ref": "applicationSecurityGroup"
+                  }
+              ]
+          }
+      ],
+      "InstanceType": {
+          "Ref": "InstanceTypeEC2"
+      },
+      "Tags": [{"Key": "Name", "Value":"csye6225-EC2Instance" }],
+      "KeyName": {
+          "Ref": "KeyNameForSSH"
+      },
+      "IamInstanceProfile": {
+          "Ref": "EC2InstanceProfile"
+      },
+      "BlockDeviceMappings": [
+          {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                  "VolumeSize": "20",
+                  "VolumeType": "gp2",
+                  "DeleteOnTermination": true
+              }
+          }
+      ],
+      "DisableApiTermination": "false",
+      "UserData" : {
+        "Fn::Base64": 
+      {
+          "Fn::Join": 
+        [
+            "\n",
+            [ 
+                   "#!/bin/bash -xe \n",
+                   "sudo apt update \n",
+                   "sudo apt install mysql-client -y \n",
+                   "sudo chmod +777 /etc/profile",
+                   {
+                    "Fn::Join": 
+                    ["",
+                      ["echo ",
+                       "'", 
+                       "export MYSQL_USERNAME=",
+                       "\"",
+                       {
+                         "Ref": "myDatabaseUsername"
+                       },
+                       "\"",
+                       "'"," >> /etc/profile \n"]
+                    ]
+                  },
+                  {
+                    "Fn::Join": 
+                    ["",
+                      ["echo ",
+                       "'", 
+                       "export MYSQL_ROOT_PASSWORD=",
+                       "\"",
+                       {
+                         "Ref": "myDatabasePassword"
+                       },
+                       "\"",
+                       "'"," >> /etc/profile \n"]
+                    ]
+                  },
+                  {
+                    "Fn::Join": 
+                    ["",
+                      ["echo ",
+                       "'", 
+                       "export MYSQL_DATABASE=",
+                       "\"",
+                       {
+                         "Ref": "myDBName"
+                       },
+                       "\"",
+                       "'"," >> /etc/profile \n"]
+                    ]
+                  },
+                   {
+                     "Fn::Join": 
+                        ["",
+                            [ "echo ",
+                              "'", 
+                              "export MYSQL_HOST=",
+                              "\"",
+                              {
+                                "Fn::GetAtt": 
+                                ["myRDSInstance","Endpoint.Address"]
+                              },
+                              "\"",
+                              "'"," >> /etc/profile \n" 
+                            
+                            ]
+                        ]
+                    },
+                    {
+                      "Fn::Join": 
+                      ["",
+                        ["echo ",
+                         "'", 
+                         "export BucketName=",
+                         "\"",
+                         {
+                           "Ref": "myS3Bucket"
+                         },
+                         "\"",
+                         "'"," >> /etc/profile \n"]
+                      ]
+                    },
+                   "echo 'export MYSQL_DIALECT=\"mysql\"' >> /etc/profile \n",
+                   "echo 'export NODE_ENV=\"test\"' >> /etc/profile \n",
+                   "echo 'export MYSQL_PORT=\"3306\"' >> /etc/profile \n",
+                   "echo 'export spring_profiles_active=\"dev\"' >> /etc/profile \n",
+                   "source /etc/profile \n"
+             ]
+          ]
+        }
+      }
+  }
+}
+        
+        
+    }
+}
