@@ -253,7 +253,14 @@
           
           "myS3Bucket": {
             "Type": "AWS::S3::Bucket",
+            "DeletionPolicy": "Delete",
             "Properties": {
+              "PublicAccessBlockConfiguration": {
+                "BlockPublicAcls": "true",
+                "BlockPublicPolicy": "true",
+                "IgnorePublicAcls": "true",
+                "RestrictPublicBuckets": "true"
+            },
               "LifecycleConfiguration": {
                 "Rules" : [{
                 "Id" : "S3 Transition and Expiration",
