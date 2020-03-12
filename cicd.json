@@ -89,9 +89,6 @@
         "myEC2InstanceCSYE6225Role" : {
           "Type":"String"
         },
-        "myEC2CSYE6255InstanceProfile" : {
-          "Type":"String"
-        },
         "myCodeDeployEC2ServiceRole": {
           "Type":"String"
         },
@@ -120,6 +117,9 @@
           "Type":"String"
         },
         "myDeploymentConfigName": {
+          "Type":"String"
+        },
+        "myCodeDeployServiceRoleInstanceProfile": {
           "Type":"String"
         }
       
@@ -399,22 +399,7 @@
                   "RoleName": {"Ref" : "myEC2InstanceCSYE6225Role"}
               }
           },
-    
-          
 
-          "EC2InstanceProfile": {
-            "Type": "AWS::IAM::InstanceProfile",
-            "DependsOn": "myEC2CSYE6225Role",
-            "Properties": {
-                "InstanceProfileName": {"Ref" : "myEC2CSYE6255InstanceProfile"},
-                "Path": "/",
-                "Roles": [
-                    {
-                        "Ref": "myEC2CSYE6225Role"
-                    }
-                ]
-            }
-        },
           "CodeDeployEC2S3": {
              "Type": "AWS::IAM::ManagedPolicy",
              "Properties": {
@@ -710,7 +695,7 @@
                     "Ref": "CodeDeployEC2ServiceRole"
                     } 
                 ],
-                "InstanceProfileName": "CodeDeployServiceRoleInstanceProfile"
+                "InstanceProfileName":  {"Ref" : "myCodeDeployServiceRoleInstanceProfile"}
              }
           },
     
