@@ -433,7 +433,6 @@
                 "ManagedPolicyName" : {"Ref" : "myCodeDeployEC2S3"}
              }
           },
-
           
           "CircleCIUploadToS3": {
              "Type": "AWS::IAM::Policy",
@@ -609,7 +608,8 @@
                   },
                   {
                     "Ref" : "myWebAppS3Policy"
-                  }
+                  },
+                  "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
                 ]
              }
           },
