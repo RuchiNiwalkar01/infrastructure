@@ -134,16 +134,16 @@
       "SNSTopicName":{
         "Type":"String"
     },
-    "LambdaS3BucketName":{
+    "myLambdaS3BucketName":{
       "Type":"String"
     },
-    "DomainNameEmail":{
+    "myDomainNameEmail":{
       "Type":"String"
     },
-    "LambdaExecutionRoleName":{
+    "myLambdaExecutionRoleName":{
       "Type":"String"
     },
-    "LambdaDeployS3PolicyName":{
+    "myLambdaDeployS3PolicyName":{
       "Type":"String"
     }
       },
@@ -1145,11 +1145,11 @@
   "Type" : "AWS::Lambda::Function",
   "Properties" : {
       "Code" : {
-        "S3Bucket": {"Ref":"LambdaS3BucketName"},
+        "S3Bucket": {"Ref":"myLambdaS3BucketName"},
         "S3Key": "index.zip"
     },
       "Environment" : { 
-        "Variables" : {"Domain" : { "Ref" :  "DomainNameEmail"}}
+        "Variables" : {"Domain" : { "Ref" :  "myDomainNameEmail"}}
       },
       "FunctionName" : "MyLambdaFunction",
       "Handler" : "com.neu.edu.lambda.LogEvent::handleRequest",
@@ -1163,7 +1163,7 @@
 "LambdaDeployS3Policy":{
   "Type": "AWS::IAM::ManagedPolicy",
   "Properties": {
-      "ManagedPolicyName": {"Ref":"LambdaDeployS3PolicyName"},
+      "ManagedPolicyName": {"Ref":"myLambdaDeployS3PolicyName"},
       "PolicyDocument": {
         "Version": "2012-10-17",
         "Statement": [
@@ -1179,7 +1179,7 @@
                   [
                       "arn:aws:s3:::",
                       {
-                          "Ref": "LambdaS3BucketName"
+                          "Ref": "myLambdaS3BucketName"
                       },
                       "/*"
                   ]
@@ -1212,7 +1212,7 @@
                 }
             ]
         },
-     "RoleName": {"Ref":"LambdaExecutionRoleName"},
+     "RoleName": {"Ref":"myLambdaExecutionRoleName"},
      "ManagedPolicyArns": [
       {
         "Ref": "LambdaDeployS3Policy"
